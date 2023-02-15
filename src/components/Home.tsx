@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   Container,
   Row,
@@ -6,9 +6,9 @@ import {
   Form,
   FormControl,
   ListGroup,
-} from "react-bootstrap"
-import { Message, User } from "../types"
-import { io } from 'socket.io-client'
+} from "react-bootstrap";
+import { Message, User } from "../types";
+import { io } from "socket.io-client";
 
 // 1. When we jump into this page, the socket.io client needs to connect to the server
 // 2. If the connection happens successfully, the server will emit an event called "welcome"
@@ -22,52 +22,52 @@ import { io } from 'socket.io-client'
 // 10. Server listens for that and then it should broadcast that message to everybody but the sender by emitting an event called "newMessage"
 // 11. Anybody who is listening for a "newMessage" event will display that in the chat
 
-const socket = io("http://localhost:3001", { transports: ["websocket"] })
+const socket = io("http://localhost:3001", { transports: ["websocket"] });
 // if you don't specify the transport ("websocket") socket.io will try to connect to the server by using Polling (old technique)
 
 const Home = () => {
-  const [username, setUsername] = useState("")
-  const [message, setMessage] = useState("")
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [onlineUsers, setOnlineUsers] = useState<User[]>([])
-  const [chatHistory, setChatHistory] = useState<Message[]>([])
+  const [username, setUsername] = useState("");
+  const [message, setMessage] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
 
   useEffect(() => {
-    socket.on("welcome", welcomeMessage => {
-      console.log(welcomeMessage)
+    socket.on("welcome", (welcomeMessage) => {
+      console.log(welcomeMessage);
 
-      socket.on("loggedIn", onlineUsersList => {
-        console.log("logged in event:", onlineUsersList)
-        setLoggedIn(true)
-        setOnlineUsers(onlineUsersList)
-      })
+      socket.on("loggedIn", (onlineUsersList) => {
+        console.log("logged in event:", onlineUsersList);
+        setLoggedIn(true);
+        setOnlineUsers(onlineUsersList);
+      });
 
-      socket.on("updateOnlineUsersList", onlineUsersList => {
-        console.log("A new user connected/disconnected")
-        setOnlineUsers(onlineUsersList)
-      })
+      socket.on("updateOnlineUsersList", (onlineUsersList) => {
+        console.log("A new user connected/disconnected");
+        setOnlineUsers(onlineUsersList);
+      });
 
-      socket.on("newMessage", newMessage => {
-        console.log(newMessage)
-        setChatHistory([...chatHistory, newMessage.message])
-      })
-    })
-  })
+      socket.on("newMessage", (newMessage) => {
+        console.log(newMessage);
+        setChatHistory([...chatHistory, newMessage.message]);
+      });
+    });
+  });
 
   const submitUsername = () => {
     // here we will be emitting a "setUsername" event (the server is already listening for that)
-    socket.emit("setUsername", { username })
-  }
+    socket.emit("setUsername", { username });
+  };
 
   const sendMessage = () => {
     const newMessage: Message = {
       sender: username,
       text: message,
-      createdAt: new Date().toLocaleString("en-US")
-    }
-    socket.emit("sendMessage", { message: newMessage })
-    setChatHistory([...chatHistory, newMessage])
-  }
+      createdAt: new Date().toLocaleString("el-gr"),
+    };
+    socket.emit("sendMessage", { message: newMessage });
+    setChatHistory([...chatHistory, newMessage]);
+  };
 
   return (
     <Container fluid>
@@ -76,36 +76,39 @@ const Home = () => {
           {/* LEFT COLUMN */}
           {/* TOP AREA: USERNAME INPUT FIELD */}
           <Form
-            onSubmit={e => {
-              e.preventDefault()
-              submitUsername()
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitUsername();
             }}
           >
             <FormControl
-              placeholder="Set your username here"
+              placeholder="Set your username here, and press 'Enter' to login!"
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
               disabled={loggedIn}
             />
           </Form>
           {/* )} */}
           {/* MIDDLE AREA: CHAT HISTORY */}
           <ListGroup>
-            {chatHistory.map((message, index) => (<ListGroup.Item key={index}>{
-              <strong>{message.sender}</strong>
-            } | {message.text} at {message.createdAt}</ListGroup.Item>))}
+            {chatHistory.map((message, index) => (
+              <ListGroup.Item style={{ color: "blue" }} key={index}>
+                {<strong>{message.sender}</strong>} | {message.text} at{" "}
+                {message.createdAt}
+              </ListGroup.Item>
+            ))}
           </ListGroup>
           {/* BOTTOM AREA: NEW MESSAGE */}
           <Form
-            onSubmit={e => {
-              e.preventDefault()
-              sendMessage()
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendMessage();
             }}
           >
             <FormControl
               placeholder="Write your message here"
               value={message}
-              onChange={e => setMessage(e.target.value)}
+              onChange={(e) => setMessage(e.target.value)}
               disabled={!loggedIn}
             />
           </Form>
@@ -113,14 +116,26 @@ const Home = () => {
         <Col md={3}>
           {/* ONLINE USERS SECTION */}
           <div className="mb-3">Connected users:</div>
-          {onlineUsers.length === 0 && <ListGroup.Item>Log in to check who is online!!</ListGroup.Item>}
-          <ListGroup>
-            {onlineUsers.map(user => (<ListGroup.Item key={user.socketId}>{user.username}</ListGroup.Item>))}
-          </ListGroup>
+          {onlineUsers.length === 0 ? (
+            <ListGroup.Item style={{ background: "red", color: "whitesmoke" }}>
+              Log in to check who is online!!
+            </ListGroup.Item>
+          ) : (
+            <ListGroup>
+              {onlineUsers.map((user) => (
+                <ListGroup.Item
+                  style={{ background: "lightgray", color: "green" }}
+                  key={user.socketId}
+                >
+                  {user.username}
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          )}
         </Col>
       </Row>
     </Container>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
